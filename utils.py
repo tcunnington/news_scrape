@@ -14,8 +14,11 @@ def resolve_date_key(date_range):
     return '_'.join(date_range)
 
 
+def get_articles_dir(source):
+    return os.path.join('articles', resolve_source_key(source))
+
 def get_articles_filepath(source, date_range):
-    return os.path.join('articles', resolve_source_key(source), resolve_date_key(date_range) + '.csv')
+    return os.path.join(get_articles_dir(source), resolve_date_key(date_range) + '.csv')
 
 
 def monthly_date_ranges(overall_date_range):

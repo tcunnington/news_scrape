@@ -1,3 +1,4 @@
+import os
 import requests
 import json
 import time
@@ -57,7 +58,7 @@ def get_article_data(source, date_range):
 
                 if max_page < n_pages:
                     print('Unable to retrieve all articles from {source} in range ({from}-{to}). Getting first 10k.'
-                          .format(source=source, **date_params))
+                          .format(source=source['name'], **date_params))
 
         page += 1
 
@@ -70,7 +71,14 @@ def preload_urls(source_id, date_range):
     source = [s for s in get_sources() if s['id'] == source_id][0]
     time.sleep(0.01)  # TODO neeeedeD?
     articles = get_article_data(source, date_range)
-    pd.DataFrame(articles).to_csv(get_articles_filepath(source, date_range))
+
+    filepath = get_articles_filepath(source_id, date_range)
+    source_dir = get_articles_dir(source_id)
+
+    if not os.path.exists(source_dir):
+        os.makedirs(source_dir)
+
+    pd.DataFrame(articles).to_csv(filepath)
 
 def preload_urls_all_sources(overall_date_range):
 
@@ -113,7 +121,7 @@ sources = {
 sources_list = list(itr.chain(*sources.values()))
 
 
-@checkpoint(key='sources.pkl', work_dir='articles/sources')
+@checkpoint(key='sources.pkl', work_dir='articles/')
 def get_sources():
     url = BASE_URL + SOURCES_ENDPOINT
 
