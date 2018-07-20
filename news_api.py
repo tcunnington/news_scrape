@@ -65,9 +65,13 @@ def get_article_data(source, date_range):
                     print('Unable to retrieve all articles from {source} in range ({from}-{to}). Getting first 10k.'
                           .format(source=source['name'], **date_params))
 
+            articles.extend(json_resp['articles'])
+        else:
+            print(json_resp)
+            raise Exception('News API batch get failed on [{},{}]'.format(source['id'], date_range))
+
         page += 1
 
-        articles.extend(json_resp['articles'])
 
     return articles
 
@@ -85,7 +89,8 @@ def preload_urls(source_id, overall_date_range):
         articles = get_article_data(source, date_range)
         filepath = get_articles_filepath(source_id, date_range)
 
-        pd.DataFrame(articles).to_csv(filepath)
+        pd.DataFrame(articles).to_csv(filepath, index=False)
+        print('Wrote {} rows to {}'.format(len(articles), filepath))
 
 def preload_urls_all_sources(overall_date_range):
 
