@@ -20,73 +20,72 @@ key_params = {
 }
 
 
-def get_article_data(source, overall_date_range):
+def get_article_data(source, date_range):
 
     url = BASE_URL + EVERYTHING_ENDPOINT
     page_size = 100
     max_page = (10000 / page_size)
     articles = []
 
-    for date_range in monthly_date_ranges(overall_date_range):
-        print(date_range)
+    date_params = {
+        'from': date_range[0],  # '2017-07-01',
+        'to': date_range[1],  # '2018-07-18'
+    }
 
-        date_params = {
-            'from': date_range[0],  # '2017-07-01',
-            'to': date_range[1],  # '2018-07-18'
+    page = 1
+    n_pages = None
+
+
+    while n_pages is None or page < n_pages:
+        other_params = {
+            'sources': source['id'],
+            'language': 'en',
+            'pageSize': page_size,
+            'page': page,
         }
 
-        page = 1
-        n_pages = None
+        if page % 10 == 0:
+            print('Page: ', page)
 
+        params = {**date_params, **other_params, **key_params}
+        response = requests.get(url, params)
+        json_resp = response.json()
 
-        while n_pages is None or page < n_pages:
-            other_params = {
-                'sources': source['id'],
-                'language': 'en',
-                'pageSize': page_size,
-                'page': page,
-            }
+        if json_resp['status'] == 'ok':
 
-            if page % 10 == 0:
-                print('Page: ', page)
+            if n_pages is None:
+                total_results = json_resp['totalResults']
+                n_pages = math.ceil(total_results / page_size)
 
-            params = {**date_params, **other_params, **key_params}
-            response = requests.get(url, params)
-            json_resp = response.json()
+                if total_results == 0:
+                    print('No results found. Terminating since there is unlikely to be any results for earlier dates')
+                    return articles
 
-            if json_resp['status'] == 'ok':
+                if max_page < n_pages:
+                    print('Unable to retrieve all articles from {source} in range ({from}-{to}). Getting first 10k.'
+                          .format(source=source['name'], **date_params))
 
-                if n_pages is None:
-                    total_results = json_resp['totalResults']
-                    n_pages = math.ceil(total_results / page_size)
+        page += 1
 
-                    if total_results == 0:
-                        print('No results found. Terminating since there is unlikely to be any results for earlier dates')
-                        return articles
-
-                    if max_page < n_pages:
-                        print('Unable to retrieve all articles from {source} in range ({from}-{to}). Getting first 10k.'
-                              .format(source=source['name'], **date_params))
-
-            page += 1
-
-            articles.extend(json_resp['articles'])
+        articles.extend(json_resp['articles'])
 
     return articles
 
 
-def preload_urls(source_id, date_range):
+def preload_urls(source_id, overall_date_range):
     source = [s for s in get_sources() if s['id'] == source_id][0]
-    time.sleep(0.01)  # TODO neeeedeD?
-    articles = get_article_data(source, date_range)
-
-    filepath = get_articles_filepath(source_id, date_range)
     source_dir = get_articles_dir(source_id)
+    time.sleep(0.01)
 
     if not os.path.exists(source_dir):
         os.makedirs(source_dir)
 
-    pd.DataFrame(articles).to_csv(filepath)
+    for date_range in monthly_date_ranges(overall_date_range):
+        print(date_range)
+        articles = get_article_data(source, date_range)
+        filepath = get_articles_filepath(source_id, date_range)
+
+        pd.DataFrame(articles).to_csv(filepath)
 
 def preload_urls_all_sources(overall_date_range):
 
