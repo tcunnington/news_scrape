@@ -22,7 +22,14 @@ def get_articles_filepath(source, date_range):
 
 
 def monthly_date_ranges(overall_date_range):
-    # split date into buckets of time, extending beyond the start time if needed
+
+    """
+    Split date into buckets of time, extending beyond the start time if needed
+    Note: dates are inclusive in this api.
+    Because of this
+    :param overall_date_range:
+    :return:
+    """
     day_delta = 30
     date_format = "%Y-%m-%d"
 
@@ -31,7 +38,7 @@ def monthly_date_ranges(overall_date_range):
 
     while from_date > start_date:
 
-        to_date = from_date
-        from_date = to_date - timedelta(days=day_delta)
+        to_date = from_date - timedelta(days=1)
+        from_date = to_date - timedelta(days=day_delta-1)
 
         yield (from_date.strftime(date_format), to_date.strftime(date_format))
