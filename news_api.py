@@ -20,49 +20,57 @@ key_params = {
 }
 
 
-def get_article_data(source, date_range):
+def get_article_data(source, overall_date_range):
 
     url = BASE_URL + EVERYTHING_ENDPOINT
-    date_params = {
-        'from': date_range[0],  # '2017-07-01',
-        'to': date_range[1],  # '2018-07-18'
-    }
-
     page_size = 100
-    page = 1
     max_page = (10000 / page_size)
-    n_pages = None
-
     articles = []
 
-    while n_pages is None or page < n_pages:
-        other_params = {
-            'sources': source['id'],
-            'language': 'en',
-            'pageSize': page_size,
-            'page': page,
+    for date_range in monthly_date_ranges(overall_date_range):
+        print(date_range)
+
+        date_params = {
+            'from': date_range[0],  # '2017-07-01',
+            'to': date_range[1],  # '2018-07-18'
         }
 
-        if page % 10 == 0:
-            print('Page: ', page)
+        page = 1
+        n_pages = None
 
-        params = {**date_params, **other_params, **key_params}
-        response = requests.get(url, params)
-        json_resp = response.json()
 
-        if json_resp['status'] == 'ok':
+        while n_pages is None or page < n_pages:
+            other_params = {
+                'sources': source['id'],
+                'language': 'en',
+                'pageSize': page_size,
+                'page': page,
+            }
 
-            if n_pages is None:
-                total_results = json_resp['totalResults']
-                n_pages = math.ceil(total_results / page_size)
+            if page % 10 == 0:
+                print('Page: ', page)
 
-                if max_page < n_pages:
-                    print('Unable to retrieve all articles from {source} in range ({from}-{to}). Getting first 10k.'
-                          .format(source=source['name'], **date_params))
+            params = {**date_params, **other_params, **key_params}
+            response = requests.get(url, params)
+            json_resp = response.json()
 
-        page += 1
+            if json_resp['status'] == 'ok':
 
-        articles.extend(json_resp['articles'])
+                if n_pages is None:
+                    total_results = json_resp['totalResults']
+                    n_pages = math.ceil(total_results / page_size)
+
+                    if total_results == 0:
+                        print('No results found. Terminating since there is unlikely to be any results for earlier dates')
+                        return articles
+
+                    if max_page < n_pages:
+                        print('Unable to retrieve all articles from {source} in range ({from}-{to}). Getting first 10k.'
+                              .format(source=source['name'], **date_params))
+
+            page += 1
+
+            articles.extend(json_resp['articles'])
 
     return articles
 
