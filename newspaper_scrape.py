@@ -40,8 +40,8 @@ def scrape_url(url):
     return article.title, article.text
 
 
-# @checkpoint(key=lambda args, kwargs: resolve_source_key(args[0]) + resolve_date_key(args[1]) + '.pkl',
-#             work_dir='articles/cache')
+@checkpoint(key=lambda args, kwargs: resolve_source_key(args[0]) + resolve_date_key(args[1]) + '.pkl',
+            work_dir='articles/cache')
 def scrape_batch(source, date_range): # Note these are the input due to making edible pickling easy
     # get urls from saved article metadata
 
@@ -75,6 +75,10 @@ def scrape_batch(source, date_range): # Note these are the input due to making e
     return df
 
 
+def scrape(source_ids, overall_date_range):
+    for date_range in monthly_date_ranges(overall_date_range):
+        for source_id in source_ids:
+            scrape_batch(source_id, date_range)
 
 
 if __name__ == "__main__":
