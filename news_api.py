@@ -21,6 +21,9 @@ key_params = {
     'apiKey': '0db63d897c9844629bc477ab2639e451',
 }
 
+class NewsApiError(Exception):
+    pass
+
 
 def get_article_data(source, date_range):
 
@@ -72,7 +75,7 @@ def get_article_data(source, date_range):
             break
         else:
             print(json_resp)
-            raise Exception('News API batch get failed on [{},{}]'.format(source['id'], date_range))
+            raise NewsApiError('News API batch get failed on [{},{}]'.format(source['id'], date_range))
 
         page += 1
 
@@ -94,9 +97,13 @@ def preload_urls(source_id, date_range):
     if os.path.exists(filepath):
         print('File already exists. Skipping this batch.')
     else:
-        articles = get_article_data(source, date_range)
-        pd.DataFrame(articles).to_csv(filepath, index=False)
-        print('Wrote {} rows to {}'.format(len(articles), filepath))
+        try:
+            articles = get_article_data(source, date_range)
+            pd.DataFrame(articles).to_csv(filepath, index=False)
+            print('Wrote {} rows to {}'.format(len(articles), filepath))
+        except NewsApiError:
+            # so that you can still try for other sources...
+            return None
 
 def preload_urls_all_sources(overall_date_range):
 
