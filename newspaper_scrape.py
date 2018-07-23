@@ -3,6 +3,8 @@
 # import requests
 # import json
 # import math
+import time
+import random
 import pandas as pd
 from datetime import datetime, timedelta
 
@@ -45,8 +47,13 @@ def scrape_url(url):
 def scrape_batch(source, date_range): # Note these are the input due to making edible pickling easy
     # get urls from saved article metadata
 
+    print('batch scrape', source, date_range)
+
     filepath = get_articles_filepath(source, date_range)
     df = pd.read_csv(filepath)
+
+    print(filepath)
+    print(df.head())
 
     if 'content' not in df.columns:
         df['content'] = ''
@@ -54,8 +61,10 @@ def scrape_batch(source, date_range): # Note these are the input due to making e
     count = 0
     error_count = 0
 
-    for row in df:
+    for row in df[:10]: # TODO OOASDFASDFADSF
         url = row.url
+
+        time.sleep(random.random() + 0.1)
 
         try:
             title, text = scrape_url(url)

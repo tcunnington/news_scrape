@@ -42,3 +42,7 @@ def monthly_date_ranges(overall_date_range):
         from_date = to_date - timedelta(days=day_delta-1)
 
         yield (from_date.strftime(date_format), to_date.strftime(date_format))
+
+
+if __name__ == "__main__":
+    print(list(monthly_date_ranges( ('2018-06-01','2018-07-18') )))

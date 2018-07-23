@@ -13,10 +13,10 @@ args = parser.parse_args()
 overall_date_range = (args.from_date, args.to_date)
 
 if not args.source:
-    print('Are you sure you want to get urls for all sources? date range = {}'.format(str(overall_date_range)))
-    answer = input("[y]/n")
-
-    if answer == '' or answer == 'y':
-        preload_urls_all_sources(overall_date_range)
+#    print('Are you sure you want to get urls for all sources? date range = {}'.format(str(overall_date_range)))
+#    answer = input("[y]/n")
+#
+#    if answer == '' or answer == 'y':
+    preload_urls_all_sources(overall_date_range)
 else:
     preload_urls(args.source, overall_date_range)

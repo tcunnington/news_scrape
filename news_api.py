@@ -15,6 +15,8 @@ BASE_URL = 'https://newsapi.org/'
 EVERYTHING_ENDPOINT = '/v2/everything'
 SOURCES_ENDPOINT = '/v2/sources'
 
+MAX_URLS = 10000
+
 key_params = {
     'apiKey': '0db63d897c9844629bc477ab2639e451',
 }
@@ -24,7 +26,7 @@ def get_article_data(source, date_range):
 
     url = BASE_URL + EVERYTHING_ENDPOINT
     page_size = 100
-    max_page = (10000 / page_size)
+    max_page = (MAX_URLS / page_size)
     articles = []
 
     date_params = {
@@ -62,10 +64,12 @@ def get_article_data(source, date_range):
                     return articles
 
                 if max_page < n_pages:
-                    print('Unable to retrieve all articles from {source} in range ({from}-{to}). Getting first 10k.'
-                          .format(source=source['name'], **date_params))
+                    print('Unable to retrieve all articles from {source} in range ({from}-{to}). Expecting to get first {max}k.'
+                          .format(source=source['name'], max=MAX_URLS/1000, **date_params))
 
             articles.extend(json_resp['articles'])
+        elif json_resp['code'] == 'maximumResultsReached':
+            break
         else:
             print(json_resp)
             raise Exception('News API batch get failed on [{},{}]'.format(source['id'], date_range))
@@ -76,7 +80,7 @@ def get_article_data(source, date_range):
     return articles
 
 
-def preload_urls(source_id, overall_date_range):
+def preload_urls(source_id, date_range):
     source = [s for s in get_sources() if s['id'] == source_id][0]
     source_dir = get_articles_dir(source_id)
     time.sleep(0.01)
@@ -84,11 +88,13 @@ def preload_urls(source_id, overall_date_range):
     if not os.path.exists(source_dir):
         os.makedirs(source_dir)
 
-    for date_range in monthly_date_ranges(overall_date_range):
-        print(date_range)
+    print(date_range)
+    filepath = get_articles_filepath(source_id, date_range)
+        
+    if os.path.exists(filepath):
+        print('File already exists. Skipping this batch.')
+    else:
         articles = get_article_data(source, date_range)
-        filepath = get_articles_filepath(source_id, date_range)
-
         pd.DataFrame(articles).to_csv(filepath, index=False)
         print('Wrote {} rows to {}'.format(len(articles), filepath))
 
@@ -96,7 +102,7 @@ def preload_urls_all_sources(overall_date_range):
 
     for date_range in monthly_date_ranges(overall_date_range):
         for source in get_sources():
-            preload_urls(source, date_range)
+            preload_urls(source['id'], date_range)
 
 #################################################
 #
@@ -150,4 +156,5 @@ def get_sources_df():
 
 if __name__ == "__main__":
     df = get_sources_df()
-    print(df)
+    print(df[['id', 'category', 'name', 'url']])
+    print(df.columns)
