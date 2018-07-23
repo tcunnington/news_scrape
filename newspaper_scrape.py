@@ -61,7 +61,7 @@ def scrape_batch(source, date_range): # Note these are the input due to making e
     count = 0
     error_count = 0
 
-    for row in df[:10]: # TODO OOASDFASDFADSF
+    for i,row in df[:10].iterrows(): # TODO OOASDFASDFADSF
         url = row.url
 
         time.sleep(random.random() + 0.1)
