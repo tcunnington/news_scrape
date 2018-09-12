@@ -10,6 +10,8 @@ import pandas as pd
 
 from utils import *
 
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv())
 
 BASE_URL = 'https://newsapi.org/'
 EVERYTHING_ENDPOINT = '/v2/everything'
@@ -18,7 +20,7 @@ SOURCES_ENDPOINT = '/v2/sources'
 MAX_URLS = 10000
 
 key_params = {
-    'apiKey': '0db63d897c9844629bc477ab2639e451',
+    'apiKey': os.getenv('NEWS_API_KEY'),
 }
 
 class NewsApiError(Exception):
